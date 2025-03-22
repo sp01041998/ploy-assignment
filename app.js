@@ -1,6 +1,17 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const app = express();
+
 const PORT = 3000;
+
+
+// Apply rate limiting (max 100 requests per 15 minutes)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutesw(adjust this value according to your usecase)
+    max: 3, // Limit each IP to 3 requests per window(adjust this value according to your usecase)
+    message: { error: "Too many requests, please try again later." }
+});
+app.use(limiter);
 
 
 function magicMath(n, memo = {}) {
