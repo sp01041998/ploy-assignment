@@ -19,61 +19,36 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-function multiplyMatrix(A, B) {
-    let C = [
-        [0n, 0n, 0n],
-        [0n, 0n, 0n],
-        [0n, 0n, 0n]
-    ];
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            for (let k = 0; k < 3; k++) {
-                C[i][j] += A[i][k] * B[k][j];
-            }
-        }
-    }
-    return C;
-}
-
-function matrixPower(M, exp) {
-    let res = [
-        [1n, 0n, 0n],
-        [0n, 1n, 0n],
-        [0n, 0n, 1n]
-    ];
-    while (exp > 0) {
-        if (exp % 2 === 1) res = multiplyMatrix(res, M);
-        M = multiplyMatrix(M, M);
-        exp = Math.floor(exp / 2);
-    }
-    return res;
-}
-
-function magicMath(n) {
-    if (n === 0) return "0";
-    if (n === 1) return "1";
-
-    
+function magicMath(n, memo = {}) {
     if (cache.has(n)) {
         console.log(`Cache hit for n = ${n}`);
         return cache.get(n);
     }
-
-    let M = [
-        [1n, 1n, 1n],
-        [1n, 0n, 0n],
-        [0n, 0n, 1n]
-    ];
-
-    let result = matrixPower(M, n - 1);
-
-    let finalResult = (result[0][0] * 1n + result[0][1] * 0n + result[0][2] * BigInt(n)).toString();
-
+    if (n === 0) return 0;
+    if (n === 1) return 1;
     
-    cache.set(n, finalResult);
+    // Using recursion with memoization for small N
+    if (n < 1000) {
+        if (memo[n]) return memo[n];
+        memo[n] = magicMath(n - 1, memo) + magicMath(n - 2, memo) + n;
+        cache.set(n, memo[n]);
+        return memo[n];
+    }
 
-    return finalResult;
+    // Using iteration for large N (to avoid stack overflow)
+    let prev2 = BigInt(0), prev1 = BigInt(1), result = BigInt(0);
+    for (let i = 2; i <= n; i++) {
+        result = prev1 + prev2 + BigInt(i);
+        prev2 = prev1;
+        prev1 = result;
+    }
+    cache.set(n, result.toString());
+    return result.toString();
 }
+
+
+
+
 
 app.get('/:n', (req, res) => {
     const n = parseInt(req?.params?.n);
